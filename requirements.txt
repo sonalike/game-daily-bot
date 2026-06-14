@@ -1,0 +1,18 @@
+# 核心
+opencv-python>=4.8
+numpy>=1.24
+pyyaml>=6.0
+
+# ADB
+pure-python-adb>=0.3.0.dev0
+
+# OCR
+paddleocr>=2.7
+
+# GUI
+PyQt6>=6.5
+
+# 工具
+schedule>=1.2
+loguru>=0.7
+pillow>=10.0

@@ -1,0 +1,19 @@
+device:
+  type: adb
+  adb_host: 127.0.0.1
+  adb_port: 7555
+
+schedule:
+  daily_time: "06:00"
+  interval_tasks: []
+
+execution:
+  step_timeout: 30
+  game_timeout: 1800
+  max_retries: 3
+
+paths:
+  screenshot_dir: ./screenshots/
+  log_dir: ./logs/
+
+games: []

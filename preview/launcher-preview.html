@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>游戏日常助手 - 启动器预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.window {
+  width: 800px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+}
+.titlebar {
+  background: #0f172a;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #334155;
+}
+.titlebar .dot { width: 10px; height: 10px; border-radius: 50%; }
+.titlebar .dot.red { background: #ef4444; }
+.titlebar .dot.yellow { background: #f59e0b; }
+.titlebar .dot.green { background: #22c55e; }
+.titlebar .title { flex: 1; text-align: center; font-size: 13px; color: #94a3b8; }
+.content { padding: 20px; display: flex; gap: 16px; }
+.left { flex: 1; }
+.right { flex: 1; }
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.header-row h2 { font-size: 16px; font-weight: 600; }
+.badge {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: #16a34a;
+  color: white;
+  border-radius: 10px;
+}
+
+.game-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+.game-card:hover { border-color: #4f46e5; }
+.game-card.running { border-color: #22c55e; border-left: 3px solid #22c55e; }
+.game-name { font-size: 14px; font-weight: 500; }
+.game-card .task-hint { font-size: 11px; color: #64748b; margin-top: 2px; }
+.status {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.status.done { background: #166534; color: #4ade80; }
+.status.running { background: #1e3a5f; color: #60a5fa; }
+.status.waiting { background: #334155; color: #94a3b8; }
+
+.log-panel {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.log-panel .log-header {
+  padding: 8px 12px;
+  background: #1e293b;
+  font-size: 12px;
+  color: #94a3b8;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+}
+.log-lines {
+  padding: 10px 12px;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #94a3b8;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.log-lines .ts { color: #64748b; margin-right: 4px; }
+.log-lines .game-tag { color: #4ade80; }
+.log-lines .game-tag2 { color: #f59e0b; }
+.log-lines .ok { color: #22c55e; }
+
+.quick-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.stat-box {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-box .num { font-size: 22px; font-weight: 700; color: #e2e8f0; }
+.stat-box .label { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+.btn-row { display: flex; gap: 8px; }
+.btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  color: white;
+}
+.btn:hover { opacity: 0.9; }
+.btn.start { background: #16a34a; }
+.btn.stop { background: #dc2626; }
+.btn.settings { background: #334155; flex: 0.4; }
+
+.schedule-info {
+  margin-top: 12px;
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <div class="title">🎮 游戏日常助手</div>
+  </div>
+  <div class="content">
+    <!-- 左栏：游戏列表 -->
+    <div class="left">
+      <div class="header-row">
+        <h2>游戏列表</h2>
+        <span class="badge">● 已连接</span>
+      </div>
+
+      <div class="game-card running">
+        <div>
+          <div class="game-name">⭐ 崩坏：星穹铁道</div>
+          <div class="task-hint">签到 · 派遣 · 体力清空</div>
+        </div>
+        <span class="status running">执行中</span>
+      </div>
+
+      <div class="game-card">
+        <div>
+          <div class="game-name">🌀 异环</div>
+          <div class="task-hint">签到 · 日常委托 · 资源本</div>
+        </div>
+        <span class="status waiting">排队中</span>
+      </div>
+
+      <div class="game-card">
+        <div>
+          <div class="game-name">🏭 明日方舟：终末地</div>
+          <div class="task-hint">签到 · 基建 · 剿灭</div>
+        </div>
+        <span class="status waiting">排队中</span>
+      </div>
+
+      <div class="game-card">
+        <div>
+          <div class="game-name">🍥 火影忍者</div>
+          <div class="task-hint">签到 · 小队突袭 · 决斗场</div>
+        </div>
+        <span class="status waiting">排队中</span>
+      </div>
+
+      <div class="quick-stats">
+        <div class="stat-box">
+          <div class="num" style="color:#4ade80;">1</div>
+          <div class="label">执行中</div>
+        </div>
+        <div class="stat-box">
+          <div class="num">3</div>
+          <div class="label">等待中</div>
+        </div>
+        <div class="stat-box">
+          <div class="num">4</div>
+          <div class="label">今日已完成</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn start" style="flex:0.3;">▶ 全部开始</button>
+        <button class="btn stop" style="flex:0.3;">■ 停止</button>
+        <button class="btn settings">⚙</button>
+      </div>
+      <div class="schedule-info">🕐 每日定时：06:00 自动执行</div>
+    </div>
+
+    <!-- 右栏：日志 -->
+    <div class="right">
+      <div class="log-panel">
+        <div class="log-header">
+          <span>📋 执行日志</span>
+          <span style="font-size:10px;">星穹铁道 ▼</span>
+        </div>
+        <div class="log-lines">
+          <span class="ts">06:00:01</span> 开始执行日常任务...<br>
+          <span class="ts">06:00:02</span> 连接 MuMu 模拟器... <span class="ok">✓</span><br>
+          <span class="ts">06:00:03</span> <span class="game-tag">[星穹铁道]</span> 启动游戏...<br>
+          <span class="ts">06:00:15</span> <span class="game-tag">[星穹铁道]</span> 等待加载完成...<br>
+          <span class="ts">06:00:32</span> <span class="game-tag">[星穹铁道]</span> ✓ 签到完成<br>
+          <span class="ts">06:00:45</span> <span class="game-tag">[星穹铁道]</span> ✓ 邮件领取完成<br>
+          <span class="ts">06:01:02</span> <span class="game-tag">[星穹铁道]</span> ✓ 派遣收菜完成<br>
+          <span class="ts">06:01:18</span> <span class="game-tag">[星穹铁道]</span> ✓ 委托完成<br>
+          <span class="ts">06:01:50</span> <span class="game-tag">[星穹铁道]</span> 正在清体力...<br>
+          <span style="color:#64748b;">━━━━━━━━━━━━━━━━━━</span><br>
+          <span class="ts">06:02:00</span> <span class="game-tag2">[异环]</span> 等待执行...<br>
+        </div>
+      </div>
+
+      <div style="font-size:12px; color:#64748b; line-height:1.6;">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e293b;">
+          <span>今日已完成任务</span><span style="color:#4ade80;">12 / 16</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e293b;">
+          <span>预计剩余时间</span><span>~18 分钟</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;">
+          <span>执行记录</span><span style="color:#3b82f6;">查看历史 →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
