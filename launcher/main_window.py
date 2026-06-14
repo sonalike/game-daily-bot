@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
 import yaml
 from pathlib import Path
+from launcher.game_card import GameCard
 
 
 class MainWindow(QMainWindow):
@@ -151,7 +152,7 @@ class MainWindow(QMainWindow):
         self.log("[系统] 打开设置...")
 
     def _populate_game_list(self):
-        """从配置加载游戏卡片（占位 — Task 11 完善）"""
+        """从配置加载游戏卡片"""
         games = self.config.get("games", [])
         if not games:
             games = [
@@ -161,34 +162,24 @@ class MainWindow(QMainWindow):
                 {"name": "火影忍者", "tasks": 4},
             ]
 
+        # Clear old cards
         while self.game_list_layout.count() > 1:
             item = self.game_list_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
         for game in games:
-            card = self._make_placeholder_card(game["name"], game.get("tasks", 0))
+            card = GameCard(game["name"], game.get("tasks", 0))
+            card.clicked.connect(self._on_game_clicked)
+            card.double_clicked.connect(self._on_game_double_clicked)
             self.game_list_layout.insertWidget(
                 self.game_list_layout.count() - 1, card
             )
 
         self.stats_label.setText(f"共 {len(games)} 款游戏")
 
-    def _make_placeholder_card(self, name: str, task_count: int) -> QWidget:
-        card = QFrame()
-        card.setFrameShape(QFrame.Shape.StyledPanel)
-        card.setFixedHeight(60)
-        card.setStyleSheet("""
-            QFrame {
-                background: #1f1f23;
-                border: 1px solid #2a2a2e;
-                border-radius: 8px;
-                padding: 10px 14px;
-            }
-        """)
-        layout = QHBoxLayout(card)
-        layout.setContentsMargins(10, 8, 10, 8)
-        label = QLabel(f"{name}  ({task_count} 个任务)")
-        label.setStyleSheet("color: #f4f4f5; font-size: 13px; font-weight: 500;")
-        layout.addWidget(label)
-        return card
+    def _on_game_clicked(self, name: str):
+        self.log(f"[系统] 选中: {name}")
+
+    def _on_game_double_clicked(self, name: str):
+        self.log(f"[系统] 双击: {name}（任务编辑器将在 Task 12 完成）")
