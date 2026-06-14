@@ -1,7 +1,15 @@
 __pycache__/
 *.pyc
+.pytest_cache/
 .superpowers/
 screenshots/
 logs/
 *.log
 .env
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+.idea/
+.vscode/
