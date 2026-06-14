@@ -72,19 +72,36 @@ class AdbDevice(Device):
         return img
 
     def tap(self, x: int, y: int):
-        self._adb('shell', 'input', 'tap', str(x), str(y), timeout=5)
+        result = self._adb('shell', 'input', 'tap', str(x), str(y), timeout=5)
+        if result.returncode != 0:
+            raise RuntimeError(f"点击失败: {result.stderr}")
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int, duration: int = 300):
-        self._adb('shell', 'input', 'swipe',
+        result = self._adb('shell', 'input', 'swipe',
                   str(x1), str(y1), str(x2), str(y2), str(duration),
                   timeout=5)
+        if result.returncode != 0:
+            raise RuntimeError(f"滑动失败: {result.stderr}")
 
     def get_resolution(self) -> tuple[int, int]:
         if self._resolution is not None:
             return self._resolution
-        result = self._adb('shell', 'wm', 'size')
-        line = result.stdout.strip()
-        size_str = line.split(':')[-1].strip()
-        w, h = size_str.split('x')
-        self._resolution = (int(w), int(h))
-        return self._resolution
+        try:
+            result = self._adb('shell', 'wm', 'size')
+            # Parse output: "Physical size: 1920x1080" or "1920x1080"
+            output = result.stdout.strip()
+            # Take the last line (Physical size takes precedence over Override size)
+            for line in reversed(output.splitlines()):
+                line = line.strip()
+                if 'x' in line and any(c.isdigit() for c in line):
+                    # Extract "WxH" pattern
+                    size_str = line.split(':')[-1].strip()
+                    if 'x' in size_str:
+                        w_str, h_str = size_str.split('x')[:2]
+                        w, h = int(w_str), int(h_str)
+                        if w > 0 and h > 0:
+                            self._resolution = (w, h)
+                            return self._resolution
+            raise ValueError(f"无法解析分辨率输出: {output}")
+        except (ValueError, AttributeError) as e:
+            raise RuntimeError(f"获取分辨率失败: {e}") from e
