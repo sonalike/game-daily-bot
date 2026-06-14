@@ -44,10 +44,10 @@ class AdbDevice(Device):
         self.serial = f'{host}:{port}'
         self._resolution = None
 
-    def _adb(self, *args, timeout: int = 10) -> subprocess.CompletedProcess:
+    def _adb(self, *args, timeout: int = 10, text: bool = True) -> subprocess.CompletedProcess:
         """执行 ADB 命令"""
         cmd = ['adb', '-s', self.serial] + list(args)
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return subprocess.run(cmd, capture_output=True, text=text, timeout=timeout)
 
     def connect(self) -> bool:
         """连接设备"""
@@ -61,7 +61,7 @@ class AdbDevice(Device):
         """通过 ADB 获取屏幕截图"""
         import cv2
 
-        result = self._adb('exec-out', 'screencap', '-p')
+        result = self._adb('exec-out', 'screencap', '-p', text=False)
         if result.returncode != 0:
             raise RuntimeError(f"截图失败: {result.stderr}")
 
