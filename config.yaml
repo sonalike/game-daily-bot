@@ -16,4 +16,16 @@ paths:
   screenshot_dir: ./screenshots/
   log_dir: ./logs/
 
-games: []
+games:
+  - name: "崩坏：星穹铁道"
+    config: games/hsr/config.yaml
+    enabled: true
+  - name: "异环"
+    config: games/yihuan/config.yaml
+    enabled: true
+  - name: "明日方舟：终末地"
+    config: games/zhongmodi/config.yaml
+    enabled: true
+  - name: "火影忍者"
+    config: games/naruto/config.yaml
+    enabled: true
