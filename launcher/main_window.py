@@ -182,4 +182,22 @@ class MainWindow(QMainWindow):
         self.log(f"[系统] 选中: {name}")
 
     def _on_game_double_clicked(self, name: str):
-        self.log(f"[系统] 双击: {name}（任务编辑器将在 Task 12 完成）")
+        """双击打开任务编辑器"""
+        from launcher.task_editor import TaskEditor
+        from core.task import Task
+
+        sample_tasks = [
+            Task(name="每日签到", task_id="signin", priority=1, enabled=True),
+            Task(name="领取邮件", task_id="mail", priority=2, enabled=True),
+            Task(name="派遣收菜", task_id="dispatch", priority=3, enabled=True,
+                 params={"duration": 20}),
+            Task(name="清空体力", task_id="stamina", priority=4, enabled=True,
+                 params={"target": "auto"}),
+            Task(name="模拟宇宙", task_id="simu", priority=5, enabled=False,
+                 params={"world": 9}),
+        ]
+
+        dialog = TaskEditor(name, sample_tasks, self)
+        if dialog.exec() == TaskEditor.DialogCode.Accepted:
+            changes = dialog.get_changes()
+            self.log(f"[系统] 任务修改已保存: {len(changes)} 项变更")
