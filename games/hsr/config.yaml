@@ -1,0 +1,30 @@
+game:
+  name: "崩坏：星穹铁道"
+  package: "com.miHoYo.hkrpg"
+  activity: ".MainActivity"
+
+tasks:
+  signin:
+    enabled: true
+    priority: 1
+    description: "每日签到"
+  claim_mail:
+    enabled: true
+    priority: 2
+    description: "领取邮件"
+  dispatch:
+    enabled: true
+    priority: 3
+    description: "派遣收菜"
+    duration_hours: 20
+  spend_stamina:
+    enabled: true
+    priority: 4
+    description: "清空体力"
+    target: "auto"
+    use_items: true
+  sim_universe:
+    enabled: false
+    priority: 5
+    description: "模拟宇宙"
+    world: 9
