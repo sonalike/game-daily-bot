@@ -138,18 +138,27 @@ class CaptureTool:
 
                 key = cv2.waitKey(50) & 0xFF
                 if key == 13 and _p1 and _p2:  # Enter
-                    name = input(f"    Asset name (Enter='{asset_id}'): ").strip()
-                    if not name:
-                        name = asset_id
-                    x1, y1 = _p1; x2, y2 = _p2
-                    x1, x2 = sorted([int(x1/_scale), int(x2/_scale)])
-                    y1, y2 = sorted([int(y1/_scale), int(y2/_scale)])
-                    roi = _img[y1:y2, x1:x2]
-                    save_path = self.assets / f"{name}.png"
-                    cv2.imwrite(str(save_path), roi)
-                    print(f"    SAVED: {save_path} ({roi.shape[1]}x{roi.shape[0]})")
-                    collected.append(asset_id)
-                    selecting = False
+                    try:
+                        name = asset_id  # use asset_id as filename
+                        x1, y1 = _p1; x2, y2 = _p2
+                        x1, x2 = sorted([int(x1/_scale), int(x2/_scale)])
+                        y1, y2 = sorted([int(y1/_scale), int(y2/_scale)])
+                        # Clamp to image bounds
+                        h, w = _img.shape[:2]
+                        x1 = max(0, x1); x2 = min(w, x2)
+                        y1 = max(0, y1); y2 = min(h, y2)
+                        if x2 <= x1 or y2 <= y1:
+                            print("    ERROR: invalid selection (zero size)")
+                            continue
+                        roi = _img[y1:y2, x1:x2]
+                        save_path = self.assets / f"{name}.png"
+                        cv2.imwrite(str(save_path), roi)
+                        print(f"    SAVED: {name}.png ({roi.shape[1]}x{roi.shape[0]})")
+                        collected.append(asset_id)
+                        selecting = False
+                    except Exception as e:
+                        print(f"    ERROR on save: {e}")
+                        import traceback; traceback.print_exc()
                 elif key == 27:
                     print(f"    SKIPPED")
                     skipped.append(asset_id)
