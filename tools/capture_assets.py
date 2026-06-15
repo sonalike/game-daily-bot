@@ -24,14 +24,17 @@ WIN = "ROI Selector"
 class CaptureTool:
     def __init__(self, game: str, window_title: str):
         self.game = game
-        self.assets = Path(f"games/{game}/assets")
+        # Fix relative path → use absolute path from project root
+        project_root = Path(__file__).parent.parent
+        self.assets = project_root / "games" / game / "assets"
         self.assets.mkdir(parents=True, exist_ok=True)
-        Path("screenshots").mkdir(exist_ok=True)
+        (project_root / "screenshots").mkdir(exist_ok=True)
 
         from core.win32_device import Win32Device
         self.dev = Win32Device(window_title=window_title)
         if not self.dev.hwnd:
             print(f"ERROR: No window matching '{window_title}' found.")
+            print("  Make sure the game is running and the window title matches.")
             sys.exit(1)
         w, h = self.dev.get_resolution()
         print(f"OK: Found game window [{w}x{h}]")
