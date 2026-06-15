@@ -30,15 +30,9 @@ def _on_mouse(event, x, y, flags, param):
         _sel = False; _p2 = (x, y)
 
 
-def _show(img, label=""):
-    """Return (updated _display_img, scale) — resize if needed"""
-    h, w = img.shape[:2]
-    s = 1.0
-    if w > 1400:
-        s = 1400 / w
-    if s != 1.0:
-        img = cv2.resize(img, (int(w * s), int(h * s)))
-    return img, s
+def _show(img):
+    """Return image as-is (no scaling) for 1:1 mouse coordinate mapping"""
+    return img, 1.0
 
 
 class CaptureTool:
