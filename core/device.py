@@ -34,6 +34,10 @@ class Device(ABC):
         """等待指定秒数"""
         time.sleep(seconds)
 
+    def press_key(self, key_code: int):
+        """按下键盘按键（默认空实现，子类按需覆盖）"""
+        raise NotImplementedError(f"{self.__class__.__name__} 不支持键盘输入")
+
 
 class AdbDevice(Device):
     """通过 ADB 连接 MuMu 模拟器"""
