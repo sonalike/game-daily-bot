@@ -13,10 +13,15 @@ class Vision:
         self.assets_dir = Path(assets_dir) if assets_dir else None
 
     def _load_template(self, path: str) -> np.ndarray:
-        """加载模板图片"""
-        img = cv2.imread(path)
+        """加载模板图片（绕过 cv2.imread 的 Windows GBK 编码问题）"""
+        # cv2.imread 在中文 Windows 上无法处理 Unicode 路径
+        # 使用 np.fromfile + cv2.imdecode 代替
+        data = np.fromfile(path, dtype=np.uint8)
+        if len(data) == 0:
+            raise FileNotFoundError(f"模板图片不存在或为空: {path}")
+        img = cv2.imdecode(data, cv2.IMREAD_COLOR)
         if img is None:
-            raise FileNotFoundError(f"模板图片不存在: {path}")
+            raise FileNotFoundError(f"无法解码模板图片: {path}")
         return img
 
     def find(self, template_path: str, screenshot: np.ndarray,
