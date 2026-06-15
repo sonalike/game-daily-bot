@@ -70,7 +70,6 @@ class Win32Device(Device):
         """查找游戏窗口"""
         # 按标题查找
         if self.window_title:
-            self._hwnd = user32.FindWindowW(None, None)
             # 枚举所有顶层窗口
             result = []
 
