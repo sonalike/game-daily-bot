@@ -99,20 +99,20 @@ class HsrAdapter(GameAdapter):
     def _do_signin(self, task: Task) -> TaskResult:
         """每日签到 — 单步：点击签到入口 → 点击领取 → 确认完成"""
         # Step 1: 点击签到入口
-        if not self._tap_asset("signin_entry", timeout=5):
+        if not self._tap_asset("daily_training_entry", timeout=5):
             return TaskResult.fail("找不到签到入口")
         self._human_pause()
 
         # Step 2: 点击领取按钮
-        if not self._tap_asset("signin_claim", timeout=3):
+        if not self._tap_asset("daily_training_claim", timeout=3):
             # 可能已经签过了
-            if self._find("signin_done"):
+            if self._find("daily_training_done"):
                 return TaskResult.skip("今日已签到")
             return TaskResult.fail("签到领取失败")
         self._human_pause()
 
         # Step 3: 验证签到完成
-        if self._find("signin_done", timeout=3):
+        if self._find("daily_training_done", timeout=3):
             return TaskResult.ok("签到完成")
         return TaskResult.ok("签到完成（未确认标识）")
 
@@ -181,18 +181,18 @@ class HsrAdapter(GameAdapter):
     def _do_dispatch(self, task: Task) -> TaskResult:
         """派遣收菜 — 多步骤"""
         # Step 1: 进入派遣
-        if not self._tap_asset("dispatch_entry", timeout=5):
+        if not self._tap_asset("assign_entry", timeout=5):
             return TaskResult.fail("找不到派遣入口")
         self._human_pause()
 
         # Step 2: 一键收取
-        if self._tap_asset("dispatch_claim", timeout=3):
+        if self._tap_asset("assign_claim", timeout=3):
             self._human_pause()
             # Step 3: 一键再派遣
-            if self._tap_asset("dispatch_redispatch", timeout=3):
+            if self._tap_asset("assign_redispatch", timeout=3):
                 self._human_pause()
                 # Step 4: 确认
-                if self._tap_asset("dispatch_confirm", timeout=3):
+                if self._tap_asset("assign_confirm", timeout=3):
                     return TaskResult.ok("派遣收菜+再派遣完成")
                 return TaskResult.ok("已收取，再派遣确认失败")
             return TaskResult.ok("已收取（无可再派遣）")
@@ -206,7 +206,7 @@ class HsrAdapter(GameAdapter):
         runs = 0
         while runs < max_runs:
             # Step 1: 进入副本
-            if not self._tap_asset("stamina_entry", timeout=3):
+            if not self._tap_asset("stamina_dungeon", timeout=3):
                 if runs == 0:
                     return TaskResult.fail("找不到体力副本入口")
                 break  # 没入口了 = 没体力了
@@ -233,10 +233,10 @@ class HsrAdapter(GameAdapter):
 
             runs += 1
             # 检查是否还能继续
-            if self._find("stamina_use_item"):
+            if self._find("stamina_refill"):
                 use_items = task.params.get("use_items", True)
                 if use_items:
-                    self._tap_asset("stamina_use_item", timeout=2)
+                    self._tap_asset("stamina_refill", timeout=2)
                     self._human_pause()
                 else:
                     break

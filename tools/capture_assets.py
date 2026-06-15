@@ -155,26 +155,38 @@ def _snap_screen_size():
         return None
 
 
-# — Asset manifests —
+# — 崩坏：星穹铁道 素材清单（使用游戏内实际名称）—
 HSR = [
-    ("signin_entry",      "Sign-in entry"),
-    ("signin_claim",      "Sign-in claim button"),
-    ("signin_done",       "Sign-in done indicator"),
-    ("mail_entry",        "Mail entry"),
-    ("mail_claim_all",    "Claim all mail"),
-    ("dispatch_entry",    "Dispatch entry"),
-    ("dispatch_claim",    "Dispatch claim"),
-    ("dispatch_redispatch","Re-dispatch button"),
-    ("dispatch_confirm",  "Dispatch confirm"),
-    ("stamina_entry",     "Stamina dungeon entry"),
-    ("stamina_start",     "Start challenge"),
-    ("stamina_auto",      "Auto-battle toggle"),
-    ("stamina_complete",  "Stage complete"),
-    ("stamina_use_item",  "Use stamina refill"),
-    ("loading_indicator", "Loading screen"),
-    ("popup_close",       "Popup close (X)"),
-    ("network_retry",     "Network retry"),
-    ("back_btn",          "Generic back button"),
+    # === 主界面 ===
+    ("main_guide_btn",        "星际和平指南按钮"),
+
+    # === 每日实训（签到）===
+    ("daily_training_entry",  "每日实训入口"),
+    ("daily_training_claim",  "每日实训领取按钮"),
+    ("daily_training_done",   "每日实训完成标识"),
+
+    # === 邮件 ===
+    ("mail_entry",            "邮件入口"),
+    ("mail_claim_all",        "一键领取按钮"),
+
+    # === 委托（Assignments）===
+    ("assign_entry",          "委托入口"),
+    ("assign_claim",          "委托收取按钮"),
+    ("assign_redispatch",     "再次委托按钮"),
+    ("assign_confirm",        "委托确认按钮"),
+
+    # === 清体力（拟造花萼/侵蚀隧洞）===
+    ("stamina_dungeon",       "体力副本入口（花萼/隧洞）"),
+    ("stamina_start",         "开始挑战按钮"),
+    ("stamina_auto",          "自动战斗开关"),
+    ("stamina_complete",      "通关完成"),
+    ("stamina_refill",        "使用体力药确认"),
+
+    # === 通用 ===
+    ("loading_indicator",     "加载画面特征"),
+    ("popup_close",           "弹窗关闭(X)"),
+    ("network_retry",         "网络重试"),
+    ("back_btn",              "返回按钮"),
 ]
 
 MANIFESTS = {"hsr": HSR}
