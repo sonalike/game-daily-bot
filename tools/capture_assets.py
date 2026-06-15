@@ -1,38 +1,24 @@
-"""Asset capture tool — crop UI elements from game screenshots.
+"""Asset capture tool — crop UI elements using OpenCV selectROI.
 
 Usage:
-    python tools/capture_assets.py --game hsr --window "Star Rail"
+    python tools/capture_assets.py --game hsr --window "星穹铁道"
 
-Mouse controls in the OpenCV window:
-    Drag to select ROI → Enter to save → type name → repeat
-    s = new screenshot | Esc = skip | q = quit
+How to use the ROI selection window:
+    - Drag mouse to select the region
+    - Press SPACE or ENTER to confirm selection
+    - Press C to cancel / skip
+    - Press S to take a new screenshot
+    - Press Q or ESC to quit
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-import cv2, numpy as np, argparse
+import cv2, argparse
 from pathlib import Path
 
-# — Globals —
-_sel = False; _p1 = None; _p2 = None; _img = None; _disp = None; _scale = 1.0
-WIN = "Asset Capture"  # ASCII only — avoids OpenCV title encoding issues on Windows
-
-
-def _on_mouse(event, x, y, flags, param):
-    global _sel, _p1, _p2
-    if event == cv2.EVENT_LBUTTONDOWN:
-        _sel = True; _p1 = (x, y); _p2 = (x, y)
-    elif event == cv2.EVENT_MOUSEMOVE and _sel:
-        _p2 = (x, y)
-    elif event == cv2.EVENT_LBUTTONUP:
-        _sel = False; _p2 = (x, y)
-
-
-def _show(img):
-    """Return image as-is (no scaling) for 1:1 mouse coordinate mapping"""
-    return img, 1.0
+WIN = "ROI Selector"
 
 
 class CaptureTool:
@@ -44,10 +30,8 @@ class CaptureTool:
 
         from core.win32_device import Win32Device
         self.dev = Win32Device(window_title=window_title)
-        self.hwnd = self.dev.hwnd
-        if not self.hwnd:
+        if not self.dev.hwnd:
             print(f"ERROR: No window matching '{window_title}' found.")
-            print("  Make sure the game is running and visible.")
             sys.exit(1)
         w, h = self.dev.get_resolution()
         print(f"OK: Found game window [{w}x{h}]")
@@ -56,148 +40,140 @@ class CaptureTool:
         return self.dev.screenshot()
 
     def run(self, items: list[tuple[str, str]]):
-        global _sel, _p1, _p2, _img, _disp, _scale
-
         cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
-        cv2.setMouseCallback(WIN, _on_mouse)
-        mvx, mvy = 100, 80  # position the cv2 window
-        cv2.moveWindow(WIN, mvx, mvy)
+        # Resize display to fit screen (max 90% of 1920x1080)
+        screen = _snap_screen_size()
+        if screen:
+            max_w = int(screen[0] * 0.85)
+            max_h = int(screen[1] * 0.80)
+            cv2.resizeWindow(WIN, max_w, max_h)
+        cv2.moveWindow(WIN, 40, 40)
 
         collected, skipped = [], []
+        img = None
         total = len(items)
+        idx = 0
 
-        for idx, (asset_id, desc) in enumerate(items):
+        print(f"\nTotal: {total} assets to capture")
+        print("SPACE/ENTER = confirm | C = skip | S = new screenshot | Q = quit\n")
+
+        while idx < total:
+            asset_id, desc = items[idx]
             path = self.assets / f"{asset_id}.png"
+
             if path.exists():
                 print(f"  [{idx+1}/{total}] SKIP {asset_id} — already exists")
                 skipped.append(asset_id)
+                idx += 1
                 continue
 
-            # Take screenshot
-            print(f"\n  [{idx+1}/{total}] {asset_id}: {desc}")
-            print(f"    -> Navigate to the right screen, then press 's' in the CV window")
-            _img = None
-            waiting = True
-            while waiting:
-                show = np.zeros((300, 500, 3), dtype=np.uint8)
-                cv2.putText(show, f"Press 's' to capture", (50, 80),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, (200, 200, 200), 2)
-                cv2.putText(show, f"[{idx+1}/{total}] {asset_id}: {desc}", (50, 130),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 180, 80), 2)
-                cv2.putText(show, f"q=quit  s=snap  Esc=skip", (50, 180),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (140, 140, 140), 1)
-                cv2.imshow(WIN, show)
+            # Take screenshot if needed
+            if img is None:
+                print(f"  [{idx+1}/{total}] {asset_id}: {desc}")
+                print(f"    Press 'S' to capture screenshot...")
+                img = None
+                # Wait for user to press S
+                while True:
+                    # Show a prompt image
+                    prompt = _make_prompt(f"[{idx+1}/{total}] {asset_id}: {desc}",
+                                          "Press S to capture | Q to quit")
+                    cv2.imshow(WIN, prompt)
+                    k = cv2.waitKey(100) & 0xFF
+                    if k == ord('s'):
+                        try:
+                            raw = self.snap()
+                            img = raw.copy()
+                            print(f"    Screenshot ready ({img.shape[1]}x{img.shape[0]})")
+                            break
+                        except Exception as e:
+                            print(f"    Error: {e}")
+                    elif k == ord('q') or k == 27:
+                        cv2.destroyAllWindows()
+                        print("Quit.")
+                        return
+                    elif k == ord('c'):
+                        print(f"    SKIPPED")
+                        skipped.append(asset_id)
+                        idx += 1
+                        img = None
+                        break
 
-                key = cv2.waitKey(50) & 0xFF
-                if key == ord('s'):
-                    try:
-                        raw = self.snap()
-                        _img, _scale = _show(raw)
-                        _p1 = _p2 = None
-                        waiting = False
-                        print("    Screenshot ready. Drag to select ROI, Enter to save.")
-                    except Exception as e:
-                        print(f"    ERROR: {e}")
-                elif key == 27:  # Esc
-                    print(f"    SKIPPED")
-                    skipped.append(asset_id)
-                    waiting = False
-                elif key == ord('q'):
-                    print("QUIT")
-                    cv2.destroyAllWindows()
-                    return
+                if img is None:
+                    continue
 
-            if _img is None:
-                continue
+            # Show image and let user select ROI
+            cv2.imshow(WIN, img)
+            roi = cv2.selectROI(WIN, img, showCrosshair=True, fromCenter=False)
 
-            # Selection loop
-            _disp = _img.copy()
-            cv2.resizeWindow(WIN, _disp.shape[1], _disp.shape[0])
-            cv2.moveWindow(WIN, mvx, mvy)
+            # selectROI returns (x, y, w, h)
+            x, y, w, h = roi
 
-            selecting = True
-            while selecting:
-                show = _disp.copy()
-                if _p1 and _p2:
-                    x1, y1 = _p1; x2, y2 = _p2
-                    cv2.rectangle(show, (x1, y1), (x2, y2), (0, 255, 60), 2)
-                    rw, rh = abs(x2-x1), abs(y2-y1)
-                    cv2.putText(show, f"{rw}x{rh}", (x1+4, y1-6),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 60), 2)
-                cv2.putText(show, f"{asset_id}: {desc}", (10, 22),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 180, 60), 2)
-                cv2.putText(show, "Enter=save | Esc=skip | s=re-capture",
-                           (10, show.shape[0]-8), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (150, 150, 150), 1)
-                cv2.imshow(WIN, show)
-
-                key = cv2.waitKey(50) & 0xFF
-                if key == 13 and _p1 and _p2:  # Enter
-                    try:
-                        name = asset_id  # use asset_id as filename
-                        x1, y1 = _p1; x2, y2 = _p2
-                        x1, x2 = sorted([int(x1/_scale), int(x2/_scale)])
-                        y1, y2 = sorted([int(y1/_scale), int(y2/_scale)])
-                        # Clamp to image bounds
-                        h, w = _img.shape[:2]
-                        x1 = max(0, x1); x2 = min(w, x2)
-                        y1 = max(0, y1); y2 = min(h, y2)
-                        if x2 <= x1 or y2 <= y1:
-                            print("    ERROR: invalid selection (zero size)")
-                            continue
-                        roi = _img[y1:y2, x1:x2]
-                        save_path = self.assets / f"{name}.png"
-                        cv2.imwrite(str(save_path), roi)
-                        print(f"    SAVED: {name}.png ({roi.shape[1]}x{roi.shape[0]})")
-                        collected.append(asset_id)
-                        selecting = False
-                    except Exception as e:
-                        print(f"    ERROR on save: {e}")
-                        import traceback; traceback.print_exc()
-                elif key == 27:
-                    print(f"    SKIPPED")
-                    skipped.append(asset_id)
-                    selecting = False
-                elif key == ord('s'):
-                    try:
-                        raw = self.snap()
-                        _img, _scale = _show(raw)
-                        _disp = _img.copy()
-                        cv2.resizeWindow(WIN, _disp.shape[1], _disp.shape[0])
-                        cv2.moveWindow(WIN, mvx, mvy)
-                        _p1 = _p2 = None
-                        print("    Re-captured.")
-                    except Exception as e:
-                        print(f"    ERROR: {e}")
-                elif key == ord('q'):
-                    print("QUIT")
-                    cv2.destroyAllWindows()
-                    return
+            if w > 0 and h > 0:
+                # Valid selection — save
+                crop = img[y:y+h, x:x+w]
+                cv2.imwrite(str(path), crop)
+                print(f"    SAVED: {asset_id}.png ({w}x{h})")
+                collected.append(asset_id)
+                idx += 1
+                img = None  # reset for next item
+            elif w == 0 and h == 0:
+                # User pressed C (cancel) or closed the ROI window
+                print(f"    SKIPPED (cancelled)")
+                skipped.append(asset_id)
+                idx += 1
+            # If negative, user pressed something else, try again
 
         cv2.destroyAllWindows()
         print(f"\n{'='*50}")
         print(f"  Done! Collected: {len(collected)} | Skipped: {len(skipped)}")
         print(f"  Assets dir: {self.assets.resolve()}")
+        print(f"{'='*50}")
+
+
+def _make_prompt(title: str, hint: str) -> "np.ndarray":
+    """Create a prompt display image"""
+    import numpy as np
+    img = np.zeros((300, 640, 3), dtype=np.uint8)
+    cv2.putText(img, title, (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 200, 100), 2)
+    cv2.putText(img, hint, (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 2)
+    cv2.putText(img, "S=Capture  C=Skip  Q=Quit", (30, 220),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (140, 140, 140), 1)
+    return img
+
+
+def _snap_screen_size():
+    """Get primary monitor resolution"""
+    try:
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        w = root.winfo_screenwidth()
+        h = root.winfo_screenheight()
+        root.destroy()
+        return (w, h)
+    except:
+        return None
 
 
 # — Asset manifests —
 HSR = [
-    ("signin_entry",      "Sign-in entry button"),
+    ("signin_entry",      "Sign-in entry"),
     ("signin_claim",      "Sign-in claim button"),
     ("signin_done",       "Sign-in done indicator"),
-    ("mail_entry",        "Mail entry button"),
-    ("mail_claim_all",    "Claim all mail button"),
-    ("dispatch_entry",    "Dispatch entry button"),
-    ("dispatch_claim",    "Dispatch claim button"),
-    ("dispatch_redispatch","Dispatch re-dispatch button"),
-    ("dispatch_confirm",  "Dispatch confirm button"),
+    ("mail_entry",        "Mail entry"),
+    ("mail_claim_all",    "Claim all mail"),
+    ("dispatch_entry",    "Dispatch entry"),
+    ("dispatch_claim",    "Dispatch claim"),
+    ("dispatch_redispatch","Re-dispatch button"),
+    ("dispatch_confirm",  "Dispatch confirm"),
     ("stamina_entry",     "Stamina dungeon entry"),
-    ("stamina_start",     "Start challenge button"),
+    ("stamina_start",     "Start challenge"),
     ("stamina_auto",      "Auto-battle toggle"),
-    ("stamina_complete",  "Stage complete indicator"),
-    ("stamina_use_item",  "Use stamina refill confirm"),
-    ("loading_indicator", "Loading screen indicator"),
-    ("popup_close",       "Popup close button (X)"),
-    ("network_retry",     "Network error retry button"),
+    ("stamina_complete",  "Stage complete"),
+    ("stamina_use_item",  "Use stamina refill"),
+    ("loading_indicator", "Loading screen"),
+    ("popup_close",       "Popup close (X)"),
+    ("network_retry",     "Network retry"),
     ("back_btn",          "Generic back button"),
 ]
 
@@ -205,9 +181,9 @@ MANIFESTS = {"hsr": HSR}
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Game UI asset capture tool")
+    ap = argparse.ArgumentParser(description="Game UI asset capture")
     ap.add_argument("--game", default="hsr")
-    ap.add_argument("--window", type=str, help="Game window title substring")
+    ap.add_argument("--window", type=str)
     args = ap.parse_args()
 
     window = args.window
@@ -217,11 +193,11 @@ def main():
 
     items = MANIFESTS.get(args.game, [])
     if not items:
-        print(f"No asset manifest for game '{args.game}'")
+        print(f"No manifest for '{args.game}'")
         sys.exit(1)
 
     print(f"Asset Capture — {args.game} ({len(items)} items)")
-    print(f"Looking for window: '{window}'\n")
+    print(f"Window: '{window}'\n")
 
     tool = CaptureTool(args.game, window)
     tool.run(items)
