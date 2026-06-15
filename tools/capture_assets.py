@@ -155,38 +155,42 @@ def _snap_screen_size():
         return None
 
 
-# — 崩坏：星穹铁道 素材清单（使用游戏内实际名称）—
+# — 崩坏：星穹铁道 素材清单 (按完整日常流程排列) —
 HSR = [
     # === 主界面 ===
-    ("main_guide_btn",        "星际和平指南按钮"),
+    ("enter_game_btn",          "主界面→点击进入游戏按钮"),
+    ("loading_screen",          "加载画面特征(用于wait_gone)"),
 
-    # === 每日实训（签到）===
-    ("daily_training_entry",  "每日实训入口"),
-    ("daily_training_claim",  "每日实训领取按钮"),
-    ("daily_training_done",   "每日实训完成标识"),
+    # === 菜单栏 ===
+    ("menu_panel",              "按Esc后的菜单栏面板(特征元素)"),
+    ("menu_mail_btn",           "菜单栏→邮箱按钮"),
+    ("menu_assign_btn",         "菜单栏→委托按钮"),
+    ("menu_guide_btn",          "菜单栏→星际和平指南按钮"),
 
-    # === 邮件 ===
-    ("mail_entry",            "邮件入口"),
-    ("mail_claim_all",        "一键领取按钮"),
+    # === 邮箱 ===
+    ("mail_claim_all_highlight","邮箱→全部领取按钮(高亮状态=有邮件)"),
 
-    # === 委托（Assignments）===
-    ("assign_entry",          "委托入口"),
-    ("assign_claim",          "委托收取按钮"),
-    ("assign_redispatch",     "再次委托按钮"),
-    ("assign_confirm",        "委托确认按钮"),
+    # === 委托 ===
+    ("assign_claim_btn",        "委托→领取奖励按钮"),
+    ("assign_close_area",       "委托→关闭领取窗口的空白区域"),
 
-    # === 清体力（拟造花萼/侵蚀隧洞）===
-    ("stamina_dungeon",       "体力副本入口（花萼/隧洞）"),
-    ("stamina_start",         "开始挑战按钮"),
-    ("stamina_auto",          "自动战斗开关"),
-    ("stamina_complete",      "通关完成"),
-    ("stamina_refill",        "使用体力药确认"),
+    # === 指南 → 角色培养 → 打本 ===
+    ("guide_char_train_btn",    "指南界面→角色培养按钮"),
+    ("char_train_enter_btn",    "角色培养→进入按钮(培养资源)"),
+    ("dungeon_select_screen",   "副本选关界面(任意特征元素)"),
+    ("dungeon_challenge_btn",   "副本选关→挑战按钮"),
+    ("team_start_btn",          "队伍配置→开始挑战按钮"),
+    ("battle_auto_btn",         "战斗→右上角自动战斗按钮"),
+    ("battle_victory_screen",   "挑战成功界面(胜利标识)"),
+    ("exit_stage_btn",          "挑战成功→退出关卡按钮"),
 
-    # === 通用 ===
-    ("loading_indicator",     "加载画面特征"),
-    ("popup_close",           "弹窗关闭(X)"),
-    ("network_retry",         "网络重试"),
-    ("back_btn",              "返回按钮"),
+    # === 指南每日奖励 ===
+    ("guide_bottom_claim_btn",  "指南→下方领取奖励按钮(第一个)"),
+    ("guide_reward_tier1",      "指南奖励→100档位按钮"),
+    ("guide_reward_tier2",      "指南奖励→200档位按钮"),
+    ("guide_reward_tier3",      "指南奖励→300档位按钮"),
+    ("guide_reward_tier4",      "指南奖励→400档位按钮"),
+    ("guide_reward_tier5",      "指南奖励→500档位按钮"),
 ]
 
 MANIFESTS = {"hsr": HSR}

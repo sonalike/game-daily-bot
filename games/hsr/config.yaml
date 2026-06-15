@@ -1,148 +1,216 @@
-# 崩坏：星穹铁道 配置文件
-# 修改步骤: 直接在下面改 steps 列表, 每个步骤是一种操作
-# 支持的步骤类型见下方注释
+# 崩坏：星穹铁道 — 完整日常流程
+# 流程: 进入游戏 → 菜单栏(邮箱→委托→指南打本) → 指南领奖 → 退出
+# 修改步骤: 直接编辑 steps 列表即可
+#
+# 步骤类型:
+#   tap_asset: 图名    找图+点击
+#   wait_asset: 图名   等图出现
+#   wait_gone: 图名    等图消失(加载)
+#   wait: 秒数         纯等待
+#   press_esc          按Esc
+#   check: 图名        分支判断(on_found/on_not_found: ok|skip|fail|continue)
+#
+# 参数: timeout(超时秒) optional(true=找不到跳过) jitter(点击偏移像素)
 
 game:
   name: "崩坏：星穹铁道"
-  package: "com.miHoYo.hkrpg"
-
-# ───────── 主界面特征图 (用于判断是否在主界面) ─────────
-main_screen_markers:
-  - "phone_icon"       # 右上角手机图标
-  - "minimap"           # 小地图
-
-# ══════════════════════════════════════════════════
-#  任务列表 (按 priority 顺序执行)
-# ══════════════════════════════════════════════════
 
 tasks:
 
-  # ── 每日实训 (签到) ──
-  daily_training:
+  # ═══════════════════════════════════════════
+  # 1. 进入游戏
+  # ═══════════════════════════════════════════
+  enter_game:
     enabled: true
     priority: 1
-    description: "每日实训"
+    description: "进入游戏"
     steps:
-      # 确保在主界面 → 打开星际和平指南
-      - tap_asset: "main_guide_btn"
-        timeout: 5
-      # 等待指南界面加载
-      - wait_asset: "daily_training_entry"
-        timeout: 5
-      # 点击每日实训页签
-      - tap_asset: "daily_training_entry"
-        timeout: 5
-      # 等待领取按钮出现 (有未领取奖励时)
-      - tap_asset: "daily_training_claim"
-        timeout: 3
-        optional: true          # 可能已领完, 找不到就跳过
-      # 确认领取完成
-      - wait: 1
-      # 按 Esc 退出指南
-      - press_esc
-      - wait: 1
+      # 主界面 → 点击"进入游戏"
+      - tap_asset: "enter_game_btn"
+        timeout: 10
+      # 等待角色操作界面加载
+      - wait_gone: "loading_screen"
+        timeout: 60
+      - wait: 2
 
-  # ── 领取邮件 ──
-  # 流程: 主界面 → 点右上角手机图标 → 点邮件 → 一键领取 → 退出
+  # ═══════════════════════════════════════════
+  # 2. 领取邮件
+  # ═══════════════════════════════════════════
   claim_mail:
     enabled: true
     priority: 2
     description: "领取邮件"
     steps:
-      # Step 1: 确保在主界面 → 点右上角手机图标
-      - tap_asset: "phone_icon"
-        timeout: 5
-        jitter: 3
-      # Step 2: 等手机菜单弹出 → 点邮件
-      - wait_asset: "mail_icon_in_menu"
-        timeout: 3
-      - tap_asset: "mail_icon_in_menu"
-        timeout: 3
-        jitter: 3
-      # Step 3: 等邮件界面加载 → 点一键领取
-      - wait_asset: "mail_claim_all"
-        timeout: 5
-      - tap_asset: "mail_claim_all"
-        timeout: 3
-        optional: true          # 无未读邮件时可能不存在
-      # Step 4: 等 1 秒确认 → 按 Esc 返回
-      - wait: 1.5
+      # 角色界面 → Esc → 菜单栏
       - press_esc
-      - wait: 0.5
-      - press_esc               # 再按一次退出手机菜单
+      - wait_asset: "menu_panel"
+        timeout: 5
+      # 点击邮箱按钮
+      - tap_asset: "menu_mail_btn"
+        timeout: 5
+        jitter: 3
+      # 等邮箱界面加载
+      - wait_gone: "loading_screen"
+        timeout: 10
+      - wait_asset: "mail_claim_all_highlight"
+        timeout: 5
+      # 点击全部领取 (高亮=有邮件, 透明=无邮件)
+      - tap_asset: "mail_claim_all_highlight"
+        timeout: 3
+        jitter: 3
+        optional: true
+      - wait: 1
 
-  # ── 委托 (Assignments) ──
-  # 流程: 主界面 → 星际和平指南 → 委托页签 → 收取 → 再次委托 → 退出
+  # ═══════════════════════════════════════════
+  # 3. 委托
+  # ═══════════════════════════════════════════
   assignments:
     enabled: true
     priority: 3
-    description: "委托收菜"
+    description: "委托领取"
     steps:
-      # 打开指南
-      - tap_asset: "main_guide_btn"
-        timeout: 5
-      - wait_asset: "guide_menu"
-        timeout: 5
-      # 点击委托页签
-      - tap_asset: "assign_tab"
-        timeout: 5
-      - wait: 1
-      # 一键收取
-      - tap_asset: "assign_claim"
-        timeout: 3
-        optional: true
-      # 再次委托
-      - tap_asset: "assign_redispatch"
-        timeout: 3
-        optional: true
-      - tap_asset: "assign_confirm"
-        timeout: 3
-        optional: true
-      # 退出
+      # 从邮箱界面 → Esc → 菜单栏
       - press_esc
+      - wait_asset: "menu_panel"
+        timeout: 5
+      # 点击委托按钮
+      - tap_asset: "menu_assign_btn"
+        timeout: 5
+        jitter: 3
+      # 等委托界面加载
+      - wait_gone: "loading_screen"
+        timeout: 10
+      # 点击领取奖励
+      - tap_asset: "assign_claim_btn"
+        timeout: 5
+        jitter: 3
+      # 点击空白处关闭领取窗口
+      - tap_asset: "assign_close_area"
+        timeout: 3
+        jitter: 10
+        optional: true
       - wait: 0.5
-      - press_esc
 
-  # ── 清体力 ──
-  # 流程: 指南 → 生存索引 → 选副本 → 自动战斗 → 循环
+  # ═══════════════════════════════════════════
+  # 4. 清体力 (指南 → 角色培养 → 打本 → 循环)
+  # ═══════════════════════════════════════════
   spend_stamina:
     enabled: true
     priority: 4
-    description: "清空体力"
-    target: "auto"
-    use_items: true
+    description: "清体力打本"
     steps:
-      - tap_asset: "main_guide_btn"
+      # 委托界面 → Esc → 菜单栏
+      - press_esc
+      - wait_asset: "menu_panel"
         timeout: 5
-      - wait_asset: "guide_menu"
+      # 点击星际和平指南
+      - tap_asset: "menu_guide_btn"
         timeout: 5
-      - tap_asset: "survival_index"
+        jitter: 3
+      # 等指南界面加载
+      - wait_gone: "loading_screen"
+        timeout: 10
+      # 点击角色培养按钮
+      - tap_asset: "guide_char_train_btn"
         timeout: 5
-      - wait_asset: "stamina_dungeon"
+        jitter: 3
+      # 找到培养目标 → 点击"进入"按钮
+      - wait_asset: "char_train_enter_btn"
         timeout: 5
-      - tap_asset: "stamina_dungeon"
+      - tap_asset: "char_train_enter_btn"
         timeout: 5
-      - wait_asset: "stamina_start"
+        jitter: 3
+      # 等副本选关界面加载
+      - wait_gone: "loading_screen"
+        timeout: 10
+      - wait_asset: "dungeon_select_screen"
+        timeout: 10
+      # 点击挑战
+      - tap_asset: "dungeon_challenge_btn"
         timeout: 5
-      - tap_asset: "stamina_auto"
-        timeout: 2
-        optional: true
-      - tap_asset: "stamina_start"
+        jitter: 3
+      # 等队伍配置界面 → 点击开始挑战
+      - wait_gone: "loading_screen"
+        timeout: 10
+      - wait_asset: "team_start_btn"
+        timeout: 5
+      - tap_asset: "team_start_btn"
+        timeout: 5
+        jitter: 3
+      # 等战斗界面 → 点自动战斗
+      - wait_gone: "loading_screen"
+        timeout: 30
+      - wait_asset: "battle_auto_btn"
+        timeout: 10
+      - tap_asset: "battle_auto_btn"
         timeout: 3
-      # 等待战斗结束
-      - wait_gone: "loading_indicator"
+        jitter: 5
+      # 等待战斗结束 (最长5分钟)
+      - wait_asset: "battle_victory_screen"
         timeout: 300
-      - wait_asset: "stamina_complete"
-        timeout: 120
-      - tap_asset: "stamina_complete"
+      # 点击退出关卡
+      - tap_asset: "exit_stage_btn"
         timeout: 5
+        jitter: 3
+      # 等返回副本选关界面
+      - wait_gone: "loading_screen"
+        timeout: 10
+      # 返回
+      - press_esc
+      - wait: 0.5
+
+  # ═══════════════════════════════════════════
+  # 5. 指南每日奖励
+  # ═══════════════════════════════════════════
+  guide_daily_rewards:
+    enabled: true
+    priority: 5
+    description: "指南每日奖励"
+    steps:
+      # 副本界面 → Esc → 角色界面 → Esc → 菜单栏
       - press_esc
       - wait: 0.5
       - press_esc
+      - wait_asset: "menu_panel"
+        timeout: 5
+      # 点击星际和平指南
+      - tap_asset: "menu_guide_btn"
+        timeout: 5
+        jitter: 3
+      # 等指南加载
+      - wait_gone: "loading_screen"
+        timeout: 10
+      # 点击下方领取奖励 (只点第一个, 自动排序)
+      - tap_asset: "guide_bottom_claim_btn"
+        timeout: 5
+        jitter: 5
+      # 依次点击5个奖励档位 (100 200 300 400 500)
+      - tap_asset: "guide_reward_tier1"
+        timeout: 3
+        jitter: 5
+      - tap_asset: "guide_reward_tier2"
+        timeout: 3
+        jitter: 5
+      - tap_asset: "guide_reward_tier3"
+        timeout: 3
+        jitter: 5
+      - tap_asset: "guide_reward_tier4"
+        timeout: 3
+        jitter: 5
+      - tap_asset: "guide_reward_tier5"
+        timeout: 3
+        jitter: 5
+      - wait: 0.5
 
-  # ── 模拟宇宙 (暂不启用) ──
-  sim_universe:
-    enabled: false
-    priority: 5
-    description: "模拟宇宙"
-    steps: []
+  # ═══════════════════════════════════════════
+  # 6. 退出 (返回角色操作界面)
+  # ═══════════════════════════════════════════
+  return_to_game:
+    enabled: true
+    priority: 6
+    description: "返回角色界面"
+    steps:
+      - press_esc
+      - wait: 0.5
+      - press_esc
+      - wait: 0.5
