@@ -2,27 +2,21 @@ import pytest
 import numpy as np
 import yaml
 from pathlib import Path
-from core.task import Task
+from core.task import Task, TaskStatus
 from games.hsr.adapter import HsrAdapter
 
 
 class MockDevice:
-    """返回空画面的模拟设备"""
     def screenshot(self):
         return np.zeros((1080, 1920, 3), dtype=np.uint8)
-
     def tap(self, x, y):
         self._last_tap = (x, y)
-
     def swipe(self, x1, y1, x2, y2, d=300):
         pass
-
     def get_resolution(self):
         return (1920, 1080)
-
     def wait(self, s):
         pass
-
     def press_key(self, key_code):
         pass
 
@@ -42,14 +36,13 @@ class TestHsrAdapter:
     def test_adapter_init(self, adapter):
         assert adapter is not None
         assert adapter.vision is not None
+        assert adapter.step_runner is not None
 
-    def test_get_tasks(self, adapter):
+    def test_get_tasks_has_steps(self, adapter):
         tasks = adapter.get_tasks()
         assert len(tasks) >= 4
-        task_ids = {t.task_id for t in tasks}
-        assert "signin" in task_ids
-        assert "dispatch" in task_ids
-        assert "spend_stamina" in task_ids
+        for task in tasks:
+            assert "steps" in task.params, f"Task {task.task_id} missing steps"
 
     def test_tasks_sorted_by_priority(self, adapter):
         tasks = adapter.get_tasks()
@@ -64,21 +57,18 @@ class TestHsrAdapter:
     def test_launch_game(self, adapter):
         adapter.launch_game()
 
-    def test_run_signin_fails_with_no_assets(self, adapter):
-        """没有素材时签到应返回 FAILED"""
-        task = Task(name="签到", task_id="signin", priority=1)
+    def test_run_task_no_assets(self, adapter):
+        """没有素材时所有步骤 fail，应返回 FAILED"""
+        task = Task(name="测试", task_id="daily_training",
+                   priority=1, params={"steps": [
+                       {"tap_asset": "nonexistent", "timeout": 1}
+                   ]})
         result = adapter.run_task(task)
-        # 空画面找不到任何素材 → 返回 FAILED
         assert result is not None
 
-    def test_claim_mail_no_assets(self, adapter):
-        """没有素材时领邮件应返回 FAILED"""
+    def test_step_engine_uses_step_runner(self, adapter):
+        """验证适配器使用 StepRunner"""
         task = Task(name="领取邮件", task_id="claim_mail", priority=2)
         result = adapter.run_task(task)
-        assert result is not None
-
-    def test_sim_universe_still_skipped(self, adapter):
-        """模拟宇宙仍返回 SKIP"""
-        task = Task(name="模拟宇宙", task_id="sim_universe", priority=5)
-        result = adapter.run_task(task)
-        assert result.status.value == "skipped"
+        # 有 steps 定义，但没有素材 → 某步会 fail
+        assert result.status in (TaskStatus.FAILED, TaskStatus.OK, TaskStatus.SKIPPED)

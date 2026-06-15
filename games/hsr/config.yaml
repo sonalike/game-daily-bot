@@ -1,30 +1,148 @@
+# 崩坏：星穹铁道 配置文件
+# 修改步骤: 直接在下面改 steps 列表, 每个步骤是一种操作
+# 支持的步骤类型见下方注释
+
 game:
   name: "崩坏：星穹铁道"
   package: "com.miHoYo.hkrpg"
-  activity: ".MainActivity"
+
+# ───────── 主界面特征图 (用于判断是否在主界面) ─────────
+main_screen_markers:
+  - "phone_icon"       # 右上角手机图标
+  - "minimap"           # 小地图
+
+# ══════════════════════════════════════════════════
+#  任务列表 (按 priority 顺序执行)
+# ══════════════════════════════════════════════════
 
 tasks:
-  signin:
+
+  # ── 每日实训 (签到) ──
+  daily_training:
     enabled: true
     priority: 1
-    description: "每日签到"
+    description: "每日实训"
+    steps:
+      # 确保在主界面 → 打开星际和平指南
+      - tap_asset: "main_guide_btn"
+        timeout: 5
+      # 等待指南界面加载
+      - wait_asset: "daily_training_entry"
+        timeout: 5
+      # 点击每日实训页签
+      - tap_asset: "daily_training_entry"
+        timeout: 5
+      # 等待领取按钮出现 (有未领取奖励时)
+      - tap_asset: "daily_training_claim"
+        timeout: 3
+        optional: true          # 可能已领完, 找不到就跳过
+      # 确认领取完成
+      - wait: 1
+      # 按 Esc 退出指南
+      - press_esc
+      - wait: 1
+
+  # ── 领取邮件 ──
+  # 流程: 主界面 → 点右上角手机图标 → 点邮件 → 一键领取 → 退出
   claim_mail:
     enabled: true
     priority: 2
     description: "领取邮件"
-  dispatch:
+    steps:
+      # Step 1: 确保在主界面 → 点右上角手机图标
+      - tap_asset: "phone_icon"
+        timeout: 5
+        jitter: 3
+      # Step 2: 等手机菜单弹出 → 点邮件
+      - wait_asset: "mail_icon_in_menu"
+        timeout: 3
+      - tap_asset: "mail_icon_in_menu"
+        timeout: 3
+        jitter: 3
+      # Step 3: 等邮件界面加载 → 点一键领取
+      - wait_asset: "mail_claim_all"
+        timeout: 5
+      - tap_asset: "mail_claim_all"
+        timeout: 3
+        optional: true          # 无未读邮件时可能不存在
+      # Step 4: 等 1 秒确认 → 按 Esc 返回
+      - wait: 1.5
+      - press_esc
+      - wait: 0.5
+      - press_esc               # 再按一次退出手机菜单
+
+  # ── 委托 (Assignments) ──
+  # 流程: 主界面 → 星际和平指南 → 委托页签 → 收取 → 再次委托 → 退出
+  assignments:
     enabled: true
     priority: 3
-    description: "派遣收菜"
-    duration_hours: 20
+    description: "委托收菜"
+    steps:
+      # 打开指南
+      - tap_asset: "main_guide_btn"
+        timeout: 5
+      - wait_asset: "guide_menu"
+        timeout: 5
+      # 点击委托页签
+      - tap_asset: "assign_tab"
+        timeout: 5
+      - wait: 1
+      # 一键收取
+      - tap_asset: "assign_claim"
+        timeout: 3
+        optional: true
+      # 再次委托
+      - tap_asset: "assign_redispatch"
+        timeout: 3
+        optional: true
+      - tap_asset: "assign_confirm"
+        timeout: 3
+        optional: true
+      # 退出
+      - press_esc
+      - wait: 0.5
+      - press_esc
+
+  # ── 清体力 ──
+  # 流程: 指南 → 生存索引 → 选副本 → 自动战斗 → 循环
   spend_stamina:
     enabled: true
     priority: 4
     description: "清空体力"
     target: "auto"
     use_items: true
+    steps:
+      - tap_asset: "main_guide_btn"
+        timeout: 5
+      - wait_asset: "guide_menu"
+        timeout: 5
+      - tap_asset: "survival_index"
+        timeout: 5
+      - wait_asset: "stamina_dungeon"
+        timeout: 5
+      - tap_asset: "stamina_dungeon"
+        timeout: 5
+      - wait_asset: "stamina_start"
+        timeout: 5
+      - tap_asset: "stamina_auto"
+        timeout: 2
+        optional: true
+      - tap_asset: "stamina_start"
+        timeout: 3
+      # 等待战斗结束
+      - wait_gone: "loading_indicator"
+        timeout: 300
+      - wait_asset: "stamina_complete"
+        timeout: 120
+      - tap_asset: "stamina_complete"
+        timeout: 5
+      - press_esc
+      - wait: 0.5
+      - press_esc
+
+  # ── 模拟宇宙 (暂不启用) ──
   sim_universe:
     enabled: false
     priority: 5
     description: "模拟宇宙"
-    world: 9
+    steps: []

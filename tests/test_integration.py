@@ -30,7 +30,7 @@ class TestConfigIntegrity:
             config = yaml.safe_load(f)
         assert "game" in config
         assert "tasks" in config
-        assert "signin" in config["tasks"]
+        assert "claim_mail" in config["tasks"]
 
 
 class TestCoreImports:
