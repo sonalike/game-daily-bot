@@ -12,6 +12,11 @@ paddleocr>=2.7
 # GUI
 PyQt6>=6.5
 
+# PC 端自动化
+mss>=10.0
+pydirectinput>=1.0
+pygetwindow>=0.0
+
 # 工具
 schedule>=1.2
 loguru>=0.7
